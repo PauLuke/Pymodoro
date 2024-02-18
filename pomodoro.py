@@ -13,7 +13,8 @@ timer.grid(row=1, column=1, padx=20, pady=20)
 time_pomodoro = 25.00
 
 while True:
-    time.sleep(0.01)
-    time_pomodoro -= 0.01
-    timer.configure(text=f"{int(time_pomodoro)}:{int((time_pomodoro - int(time_pomodoro)) * 10)}")
-    app.update()
+    for minutes in range(25, -1, -1):
+        for seconds in range(59, -1, -1):
+            time.sleep(1)
+            timer.configure(text=f"{minutes}:{seconds}")
+            app.update()
