@@ -1,5 +1,6 @@
 import customtkinter
 from PIL import Image
+from playsound import playsound
 
 
 class PomodoroApp:
@@ -10,13 +11,22 @@ class PomodoroApp:
     pomodoro_break_time = 5
     pomodoro_long_break_time = 15
 
-    menu_icon = customtkinter.CTkImage(light_image=Image.open("./menu_icon.png"),
-                                       dark_image=Image.open("./menu_icon.png"),
-                                       size=(25, 25))
+    control = 0
+    beep = 'beep.wav'
+    is_idle = True
 
-    play_icon = customtkinter.CTkImage(light_image=Image.open("./play_icon.png"),
-                                       dark_image=Image.open("./play_icon.png"),
-                                       size=(25, 25))
+    settings_icon = customtkinter.CTkImage(light_image=Image.open('settings_icon.png'),
+                                           dark_image=Image.open('settings_icon.png'),
+                                           size=(27, 27))
+    play_icon = customtkinter.CTkImage(light_image=Image.open('./play_icon.png'),
+                                       dark_image=Image.open('./play_icon.png'),
+                                       size=(60, 60))
+    pause_icon = customtkinter.CTkImage(light_image=Image.open('./pause_icon.png'),
+                                        dark_image=Image.open('./pause_icon.png'),
+                                        size=(60, 60))
+    stop_icon = customtkinter.CTkImage(light_image=Image.open('stop_icon.png'),
+                                       dark_image=Image.open('stop_icon.png'),
+                                       size=(60, 60))
 
     def __init__(self):
         self.app = customtkinter.CTk()
@@ -25,50 +35,104 @@ class PomodoroApp:
         self.app.resizable(False, False)
 
         self.timer_display = customtkinter.CTkLabel(self.app,
-                                                    text=f"{PomodoroApp.pomodoro_time}:00",
+                                                    text=f"{PomodoroApp.pomodoro_time:02}:00",
                                                     font=("Arial", 120),
                                                     text_color=("black", "white"))
-        self.timer_display.place(x=100, y=100)
+        self.timer_display.place(x=100, y=150)
 
-        self.menu_button = customtkinter.CTkButton(self.app,
-                                                   fg_color="transparent",
-                                                   image=PomodoroApp.menu_icon,
-                                                   width=25,
-                                                   height=25,
-                                                   hover=False,
-                                                   border_spacing=0,
-                                                   command=PomodoroApp.do_menu,
-                                                   text="",
-                                                   cursor="hand2")
-        self.menu_button.place(x=0, y=0)
+        self.settings_button = customtkinter.CTkButton(self.app,
+                                                       fg_color='transparent',
+                                                       image=PomodoroApp.settings_icon,
+                                                       width=27,
+                                                       height=27,
+                                                       hover=False,
+                                                       border_spacing=0,
+                                                       border_width=0,
+                                                       corner_radius=0,
+                                                       command=PomodoroApp.do_menu,
+                                                       text='',
+                                                       cursor='hand2')
+        self.settings_button.place(x=455, y=20)
 
         self.play_button = customtkinter.CTkButton(self.app,
-                                                   fg_color="transparent",
+                                                   fg_color='transparent',
                                                    image=PomodoroApp.play_icon,
-                                                   width=25,
-                                                   height=25,
                                                    hover=False,
+                                                   width=60,
+                                                   height=60,
                                                    border_spacing=0,
-                                                   command=PomodoroApp.do_play,
-                                                   text="",
-                                                   cursor="hand2")
-        self.play_button.place(x=100, y=400)
+                                                   border_width=0,
+                                                   corner_radius=0,
+                                                   command=self.do_play,
+                                                   text='',
+                                                   cursor='hand2')
+        self.play_button.place(x=215, y=370)
+
+        self.pause_button = customtkinter.CTkButton(self.app,
+                                                    fg_color='transparent',
+                                                    image=PomodoroApp.pause_icon,
+                                                    hover=False,
+                                                    width=60,
+                                                    height=60,
+                                                    border_spacing=0,
+                                                    border_width=0,
+                                                    corner_radius=0,
+                                                    command=self.do_pause,
+                                                    text='',
+                                                    cursor='hand2')
+        self.pause_button.place(x=280, y=370)
+
+        self.stop_button = customtkinter.CTkButton(self.app,
+                                                   fg_color='transparent',
+                                                   image=PomodoroApp.stop_icon,
+                                                   hover=False,
+                                                   width=60,
+                                                   height=60,
+                                                   border_spacing=0,
+                                                   border_width=0,
+                                                   corner_radius=0,
+                                                   command=self.do_stop,
+                                                   text='',
+                                                   cursor='hand2')
+        self.stop_button.place(x=150, y=370)
 
     @classmethod
     def do_menu(cls):
         return
 
-    @classmethod
-    def do_play(cls):
+    def do_play(self):
+        if PomodoroApp.control == 0:
+            self.countdown_timer(PomodoroApp.pomodoro_time, 0)
+        PomodoroApp.control = 1
+        PomodoroApp.is_idle = False
+        return
+
+    @staticmethod
+    def do_pause():
+        PomodoroApp.is_idle = True
+        return
+
+    @staticmethod
+    def do_stop():
+        PomodoroApp.is_idle = True
+        PomodoroApp.control = 2
         return
 
     def update_timer(self, minutes, seconds):
-        self.timer_display.configure(text=f"{minutes:02}:{seconds:02}")
+        self.timer_display.configure(text=f'{minutes:02}:{seconds:02}')
         self.app.update()
 
     def countdown_timer(self, minutes, seconds):
-        if minutes == 0 and seconds == 0:
-            return  # Timer finished
+        if PomodoroApp.is_idle:
+            if PomodoroApp.control == 2:
+                minutes = PomodoroApp.pomodoro_time
+                seconds = 0
+                self.update_timer(minutes, seconds)
+            return self.app.after(1000, self.countdown_timer, minutes, seconds)
+        elif minutes == 0 and seconds == 0:
+            playsound(PomodoroApp.beep)
+            minutes = PomodoroApp.pomodoro_break_time
+            return self.app.after(1000, self.countdown_timer, minutes, seconds)
         elif seconds == 0:
             minutes -= 1
             seconds = 59
@@ -82,7 +146,7 @@ class PomodoroApp:
         self.app.mainloop()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     pomodoro_app = PomodoroApp()
-    pomodoro_app.countdown_timer(PomodoroApp.pomodoro_time, 0)
-    pomodoro_app.run()
+    while True:
+        pomodoro_app.run()
